@@ -6,6 +6,30 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT, TA_JUSTIFY
 from reportlab.pdfgen import canvas
 
+# ── COVER PAGE BACKGROUND DRAWING ───────────────────────────────────────
+def draw_cover_background(canvas_obj, doc_obj):
+    canvas_obj.saveState()
+    canvas_obj.setFillColor(colors.HexColor("#0f172a")) # Slate 900
+    canvas_obj.rect(0, 0, 595.27, 841.89, fill=1, stroke=0)
+    
+    # Draw abstract glowing accent geometries
+    canvas_obj.setFillColor(colors.HexColor("#1e1b4b")) # Indigo 950
+    p = canvas_obj.beginPath()
+    p.moveTo(0, 0)
+    p.lineTo(400, 0)
+    p.lineTo(0, 500)
+    p.close()
+    canvas_obj.drawPath(p, fill=1, stroke=0)
+    
+    canvas_obj.setFillColor(colors.HexColor("#312e81")) # Indigo 900
+    p2 = canvas_obj.beginPath()
+    p2.moveTo(595.27, 841.89)
+    p2.lineTo(195.27, 841.89)
+    p2.lineTo(595.27, 441.89)
+    p2.close()
+    canvas_obj.drawPath(p2, fill=1, stroke=0)
+    canvas_obj.restoreState()
+
 # ── CANVAS WITH PROFESSIONAL HEADERS & FOOTERS ─────────────────────────
 class NumberedCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
@@ -26,29 +50,7 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_decorations(self, page_count):
         if self._pageNumber == 1:
-            # Draw premium background elements on Cover Page
-            self.saveState()
-            self.setFillColor(colors.HexColor("#0f172a")) # Slate 900
-            self.rect(0, 0, 595.27, 841.89, fill=1, stroke=0)
-            
-            # Draw abstract glowing accent geometries
-            self.setFillColor(colors.HexColor("#1e1b4b")) # Indigo 950
-            p = self.beginPath()
-            p.moveTo(0, 0)
-            p.lineTo(400, 0)
-            p.lineTo(0, 500)
-            p.close()
-            self.drawPath(p, fill=1, stroke=0)
-            
-            self.setFillColor(colors.HexColor("#312e81")) # Indigo 900
-            p2 = self.beginPath()
-            p2.moveTo(595.27, 841.89)
-            p2.lineTo(195.27, 841.89)
-            p2.lineTo(595.27, 441.89)
-            p2.close()
-            self.drawPath(p2, fill=1, stroke=0)
-            self.restoreState()
-            return
+            return # Background is drawn by draw_cover_background on first page
             
         self.saveState()
         self.setFont("Helvetica-Bold", 8)
@@ -563,7 +565,7 @@ def build_pdf():
     story.append(t_tech)
     
     # Build Document
-    doc.build(story, canvasmaker=NumberedCanvas)
+    doc.build(story, canvasmaker=NumberedCanvas, onFirstPage=draw_cover_background)
     print("Report PDF generated successfully!")
 
 if __name__ == "__main__":
