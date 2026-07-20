@@ -1,6 +1,6 @@
 # RetailPulse — AI-Powered Customer Analytics & Demand Forecasting Platform
 
-[![CI/CD](https://github.com/yourusername/retailpulse/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/yourusername/retailpulse/actions/workflows/ci-cd.yml)
+[![CI/CD](https://github.com/dhruvbhaskar07/RetailPulse/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/dhruvbhaskar07/RetailPulse/actions/workflows/ci-cd.yml)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-red.svg)](https://streamlit.io)
 [![Docker](https://img.shields.io/badge/Docker-ready-blue.svg)](https://docker.com)
