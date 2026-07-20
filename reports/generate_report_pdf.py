@@ -122,16 +122,7 @@ def build_pdf():
     
     story.append(Spacer(1, 20))
     # Elegant small cyan line
-    story.append(HRFlowable(width="15%", thickness=3, color=colors.HexColor("#10b981"), hAlign='LEFT', spaceAfter=220))
-    
-    meta_text = """
-    <b>Prepared by:</b> Dhruv<br/>
-    <b>Affiliation:</b> BCA Data Science, IMS Ghaziabad<br/>
-    <b>Domain:</b> Data Science & Analytics, Zidio Development<br/>
-    <b>Submission Date:</b> July 2026<br/>
-    <b>License:</b> MIT License
-    """
-    story.append(Paragraph(meta_text, styles['CoverMeta']))
+    story.append(HRFlowable(width="15%", thickness=3, color=colors.HexColor("#10b981"), hAlign='LEFT', spaceAfter=20))
     story.append(PageBreak())
     
     # ───────────────────────────────────────────────────────────────────
