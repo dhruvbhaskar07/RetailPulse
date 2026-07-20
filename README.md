@@ -259,6 +259,10 @@ Report images are saved to `reports/`.
 
 MIT License — see [LICENSE](LICENSE) file for details.
 
+## Author
+
+**Dhruv Bhaskar** — [GitHub](https://github.com/dhruvbhaskar07) — Zidio Development
+
 ## Acknowledgments
 
 - **Online Retail II** dataset — UCI Machine Learning Repository

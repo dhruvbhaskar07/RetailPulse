@@ -1,5 +1,7 @@
 # RetailPulse — Power BI Dashboards
 
+> **Author:** Dhruv Bhaskar ([GitHub](https://github.com/dhruvbhaskar07))
+> 
 > [Power BI Dashboards Source Document](../source/RetailPulse%20PowerBI%20Dashboards%20(1).txt)
 
 ## Data Source
