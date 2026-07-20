@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { margin: 0; overflow: hidden; background: transparent; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+const scene = new THREE.Scene();
+scene.background = null;
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 32;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+document.body.appendChild(renderer.domElement);
+
+const count = 600;
+const positions = new Float32Array(count * 3);
+const speeds = new Float32Array(count);
+
+for (let i = 0; i < count; i++) {
+  const radius = 10 + Math.random() * 10;
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2 * Math.random() - 1);
+  positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+  positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+  positions[i * 3 + 2] = radius * Math.cos(phi);
+  speeds[i] = 0.2 + Math.random() * 0.5;
+}
+
+const particlesGeo = new THREE.BufferGeometry();
+particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+particlesGeo.setAttribute('speed', new THREE.BufferAttribute(speeds, 1));
+
+const texture = (() => {
+  const c = document.createElement('canvas');
+  c.width = 64; c.height = 64;
+  const ctx = c.getContext('2d');
+  const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, 'rgba(200,180,255,1)');
+  grad.addColorStop(0.2, 'rgba(124,58,237,0.9)');
+  grad.addColorStop(0.5, 'rgba(236,72,153,0.4)');
+  grad.addColorStop(1, 'rgba(236,72,153,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+})();
+
+const material = new THREE.PointsMaterial({
+  size: 0.7,
+  map: texture,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+  transparent: true,
+  color: '#9B7EFF',
+  opacity: 0.9,
+});
+const particles = new THREE.Points(particlesGeo, material);
+scene.add(particles);
+
+const glowGeo = new THREE.BufferGeometry();
+const glowPos = new Float32Array(count * 3);
+for (let i = 0; i < count; i++) {
+  const r = 10 + Math.random() * 10;
+  const t = Math.random() * Math.PI * 2;
+  const p = Math.acos(2 * Math.random() - 1);
+  glowPos[i * 3] = r * Math.sin(p) * Math.cos(t);
+  glowPos[i * 3 + 1] = r * Math.sin(p) * Math.sin(t);
+  glowPos[i * 3 + 2] = r * Math.cos(p);
+}
+glowGeo.setAttribute('position', new THREE.BufferAttribute(glowPos, 3));
+const glowMat = new THREE.PointsMaterial({
+  size: 1.8,
+  map: texture,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+  transparent: true,
+  color: '#7C3AED',
+  opacity: 0.15,
+});
+const glowParticles = new THREE.Points(glowGeo, glowMat);
+scene.add(glowParticles);
+
+const ring1 = new THREE.Mesh(
+  new THREE.TorusGeometry(14, 0.05, 24, 120),
+  new THREE.MeshBasicMaterial({ color: '#9B7EFF', transparent: true, opacity: 0.25 })
+);
+ring1.rotation.x = Math.PI / 3;
+scene.add(ring1);
+
+const ring2 = new THREE.Mesh(
+  new THREE.TorusGeometry(10, 0.04, 24, 120),
+  new THREE.MeshBasicMaterial({ color: '#EC4899', transparent: true, opacity: 0.2 })
+);
+ring2.rotation.x = -Math.PI / 4;
+ring2.rotation.z = Math.PI / 5;
+scene.add(ring2);
+
+const ring3 = new THREE.Mesh(
+  new THREE.TorusGeometry(18, 0.03, 24, 120),
+  new THREE.MeshBasicMaterial({ color: '#7C3AED', transparent: true, opacity: 0.15 })
+);
+ring3.rotation.y = Math.PI / 4;
+ring3.rotation.x = Math.PI / 2;
+scene.add(ring3);
+
+const ring4 = new THREE.Mesh(
+  new THREE.TorusKnotGeometry(8, 2.5, 64, 8),
+  new THREE.MeshBasicMaterial({ color: '#EC4899', transparent: true, opacity: 0.06, wireframe: true })
+);
+scene.add(ring4);
+
+const linesCount = 80;
+const linesGeo = new THREE.BufferGeometry();
+const linePositions = new Float32Array(linesCount * 6);
+for (let i = 0; i < linesCount; i++) {
+  const a = Math.random() * count | 0;
+  let b = Math.random() * count | 0;
+  while (b === a) b = Math.random() * count | 0;
+  linePositions[i * 6] = positions[a * 3];
+  linePositions[i * 6 + 1] = positions[a * 3 + 1];
+  linePositions[i * 6 + 2] = positions[a * 3 + 2];
+  linePositions[i * 6 + 3] = positions[b * 3];
+  linePositions[i * 6 + 4] = positions[b * 3 + 1];
+  linePositions[i * 6 + 5] = positions[b * 3 + 2];
+}
+linesGeo.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+const linesMat = new THREE.LineBasicMaterial({
+  color: '#9B7EFF',
+  transparent: true,
+  opacity: 0.05,
+});
+const lines = new THREE.LineSegments(linesGeo, linesMat);
+scene.add(lines);
+
+let mouseX = 0, mouseY = 0;
+document.addEventListener('mousemove', (e) => {
+  mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+  mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  particles.rotation.y = t * 0.05 + mouseX * 0.1;
+  particles.rotation.x = Math.sin(t * 0.02) * 0.1 + mouseY * 0.05;
+  glowParticles.rotation.y = t * 0.03 + mouseX * 0.08;
+  glowParticles.rotation.x = Math.cos(t * 0.015) * 0.08 + mouseY * 0.04;
+  ring1.rotation.y = t * 0.06;
+  ring1.rotation.z = Math.sin(t * 0.03) * 0.05;
+  ring2.rotation.y = -t * 0.04;
+  ring2.rotation.x = Math.sin(t * 0.02) * 0.05 - Math.PI / 4;
+  ring3.rotation.y = t * 0.03 + Math.PI / 4;
+  ring3.rotation.x = Math.sin(t * 0.025) * 0.03 + Math.PI / 2;
+  ring4.rotation.x = t * 0.08;
+  ring4.rotation.y = t * 0.12;
+  lines.rotation.y = particles.rotation.y;
+  lines.rotation.x = particles.rotation.x;
+
+  const sizes = particles.geometry.attributes.position.array;
+  for (let i = 0; i < count; i++) {
+    const idx = i * 3;
+    const pulse = 1 + Math.sin(t * speeds[i] + idx) * 0.03;
+    sizes[idx] *= pulse / (1 + 0.01);
+    sizes[idx + 1] *= pulse / (1 + 0.01);
+    sizes[idx + 2] *= pulse / (1 + 0.01);
+  }
+  particles.geometry.attributes.position.needsUpdate = true;
+
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>

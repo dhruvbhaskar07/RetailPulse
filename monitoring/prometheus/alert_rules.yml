@@ -1,0 +1,93 @@
+groups:
+  - name: retailpulse_alerts
+    interval: 30s
+    rules:
+      - alert: HighAPILatency
+        expr: retailpulse_request_duration_seconds{quantile="0.95"} > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency ({{ $value }}s)"
+          description: "95th percentile request duration > 1s for 5 minutes. Current: {{ $value }}s"
+
+      - alert: CriticalAPILatency
+        expr: retailpulse_request_duration_seconds{quantile="0.99"} > 3.0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical API latency ({{ $value }}s)"
+          description: "99th percentile request duration > 3s. Current: {{ $value }}s"
+
+      - alert: HighErrorRate
+        expr: rate(retailpulse_requests_total{status=~"5.."}[5m]) / rate(retailpulse_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate ({{ $value | humanizePercentage }})"
+          description: "Error rate > 5% for 5 minutes. Current: {{ $value | humanizePercentage }}"
+
+      - alert: High4xxRate
+        expr: rate(retailpulse_requests_total{status=~"4.."}[5m]) / rate(retailpulse_requests_total[5m]) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 4xx rate ({{ $value | humanizePercentage }})"
+          description: "4xx error rate > 10%. Current: {{ $value | humanizePercentage }}"
+
+      - alert: ModelDriftDetected
+        expr: retailpulse_model_drift_score > 0.3
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Model drift detected (score: {{ $value }})"
+          description: "Drift score > 0.3 threshold. Consider retraining models."
+
+      - alert: HighStockoutRisk
+        expr: retailpulse_stockout_risk_skus > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High stockout risk ({{ $value }} SKUs)"
+          description: "More than 100 SKUs at risk of stockout. Current: {{ $value }}"
+
+      - alert: ModelPredictionSlow
+        expr: retailpulse_model_prediction_duration_seconds{model="ensemble"} > 2.0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow model prediction ({{ $value }}s)"
+          description: "Ensemble prediction latency > 2s. Current: {{ $value }}s"
+
+      - alert: APIUnreachable
+        expr: up{job="api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API is unreachable"
+          description: "API endpoint has been down for more than 1 minute."
+
+      - alert: LowModelAccuracy
+        expr: retailpulse_model_mape > 0.12
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low model accuracy (MAPE: {{ $value }})"
+          description: "Forecast MAPE > 12% target. Current: {{ $value | humanizePercentage }}"
+
+      - alert: DashboardUnreachable
+        expr: probe_success{job="dashboard"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Dashboard is unreachable"
+          description: "Streamlit dashboard has not responded for 2 minutes."

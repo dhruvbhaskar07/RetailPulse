@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.jwt_secret
+data/raw/
+data/processed/
+mlruns/
+reports/
+models/
+*.log
+.DS_Store

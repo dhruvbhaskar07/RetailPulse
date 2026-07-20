@@ -1,0 +1,6 @@
+{
+  "auto_refresh": true,
+  "refresh_interval_min": 5,
+  "theme": "dark",
+  "default_date_range_days": 90
+}

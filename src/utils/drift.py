@@ -1,0 +1,112 @@
+"""Data drift detection module.
+
+Uses Evidently AI to compare reference and current data slices,
+generating HTML drift reports and tracking summary metrics.
+"""
+
+import pandas as pd
+import numpy as np
+from pathlib import Path
+import sys
+import json
+import warnings
+warnings.filterwarnings("ignore")
+
+sys.path.append(str(Path(__file__).parent.parent.parent))
+from src.config import DATA_PROCESSED, REPORTS_DIR
+
+EVIDENTLY_AVAILABLE = False
+try:
+    from evidently.report import Report
+    from evidently.metric_preset import DataDriftPreset, TargetDriftPreset, DataQualityPreset
+    EVIDENTLY_AVAILABLE = True
+except ImportError:
+    pass
+
+def prepare_reference_data(daily_sales: pd.DataFrame, n_samples: int = 10000) -> pd.DataFrame:
+    cutoff = daily_sales["date"].quantile(0.7)
+    ref_data = daily_sales[daily_sales["date"] <= cutoff].copy()
+    if len(ref_data) > n_samples:
+        ref_data = ref_data.sample(n=n_samples, random_state=42)
+    return ref_data
+
+def prepare_current_data(daily_sales: pd.DataFrame, n_samples: int = 10000) -> pd.DataFrame:
+    cutoff = daily_sales["date"].quantile(0.7)
+    cur_data = daily_sales[daily_sales["date"] > cutoff].copy()
+    if len(cur_data) > n_samples:
+        cur_data = cur_data.sample(n=n_samples, random_state=42)
+    return cur_data
+
+def generate_data_drift_report(reference_data, current_data, target_col=None,
+                                categorical_features=None, numerical_features=None,
+                                output_path=None) -> dict:
+    if not EVIDENTLY_AVAILABLE:
+        return {"error": "Evidently AI not installed"}
+    if categorical_features is None:
+        categorical_features = reference_data.select_dtypes(include=["object", "category"]).columns.tolist()
+    if numerical_features is None:
+        numerical_features = reference_data.select_dtypes(include=[np.number]).columns.tolist()
+    if target_col and target_col in numerical_features:
+        numerical_features.remove(target_col)
+    column_mapping = {}
+    if target_col:
+        column_mapping["target"] = target_col
+    if categorical_features:
+        column_mapping["categorical_features"] = categorical_features
+    if numerical_features:
+        column_mapping["numerical_features"] = numerical_features
+    report = Report(metrics=[DataDriftPreset(), DataQualityPreset()])
+    report.run(reference_data=reference_data, current_data=current_data, column_mapping=column_mapping)
+    if output_path:
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        report.save_html(output_path)
+    report_dict = report.as_dict()
+    dataset_drift = False
+    drift_share = 0
+    for metric in report_dict.get("metrics", []):
+        if metric.get("metric") == "DatasetDriftMetric":
+            dataset_drift = metric.get("value", {}).get("dataset_drift", False)
+            drift_share = metric.get("value", {}).get("drift_share", 0)
+            break
+    return {"dataset_drift": dataset_drift, "drift_share": drift_share, "report_path": output_path}
+
+def run_drift_detection_pipeline():
+    if not EVIDENTLY_AVAILABLE:
+        print("Evidently AI not installed. Skipping drift detection.")
+        return {}
+    print("Loading data for drift detection...")
+    daily_sales = pd.read_parquet(DATA_PROCESSED / "daily_sales_ts.parquet")
+    customer_features = pd.read_parquet(DATA_PROCESSED / "customer_features.parquet")
+    ref_sales = prepare_reference_data(daily_sales)
+    cur_sales = prepare_current_data(daily_sales)
+    sales_drift = generate_data_drift_report(
+        reference_data=ref_sales, current_data=cur_sales,
+        categorical_features=["store_id", "product_id"],
+        numerical_features=["total_quantity", "total_revenue", "transaction_count", "unique_customers"],
+        output_path=REPORTS_DIR / "drift" / "sales_data_drift.html"
+    )
+    print(f"   Sales drift: {sales_drift.get('dataset_drift')}, Share: {sales_drift.get('drift_share', 0):.2%}")
+    cust_numerical = customer_features.select_dtypes(include=[np.number]).columns.tolist()
+    cust_categorical = customer_features.select_dtypes(include=["object", "category"]).columns.tolist()
+    exclude = {"customer_id", "churn", "churn_risk_score"}
+    cust_numerical = [c for c in cust_numerical if c not in exclude]
+    cust_categorical = [c for c in cust_categorical if c not in exclude]
+    ref_cust = customer_features.sample(n=min(5000, len(customer_features)), random_state=42)
+    cur_cust = customer_features.sample(n=min(5000, len(customer_features)), random_state=123)
+    cust_drift = generate_data_drift_report(
+        reference_data=ref_cust, current_data=cur_cust,
+        categorical_features=cust_categorical, numerical_features=cust_numerical,
+        output_path=REPORTS_DIR / "drift" / "customer_features_drift.html"
+    )
+    print(f"   Customer drift: {cust_drift.get('dataset_drift')}, Share: {cust_drift.get('drift_share', 0):.2%}")
+    summary = {"sales_drift": sales_drift, "customer_drift": cust_drift, "timestamp": pd.Timestamp.now().isoformat()}
+    summary_path = REPORTS_DIR / "drift" / "drift_summary.json"
+    Path(summary_path).parent.mkdir(parents=True, exist_ok=True)
+    with open(summary_path, "w") as f:
+        json.dump(summary, f, indent=2, default=str)
+    print(f"Drift detection complete. Summary saved to {summary_path}")
+    return summary
+
+if __name__ == "__main__":
+    if EVIDENTLY_AVAILABLE:
+        run_drift_detection_pipeline()

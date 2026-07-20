@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: retailpulse-api
+  namespace: retailpulse
+  labels:
+    app: retailpulse-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: retailpulse-api
+  template:
+    metadata:
+      labels:
+        app: retailpulse-api
+    spec:
+      containers:
+      - name: api
+        image: ghcr.io/your-org/retailpulse:latest
+        command: ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: retailpulse-config
+        - secretRef:
+            name: retailpulse-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      - name: dashboard
+        image: ghcr.io/your-org/retailpulse:latest
+        command: ["streamlit", "run", "src/dashboard/app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+        ports:
+        - containerPort: 8501
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: retailpulse-api
+  namespace: retailpulse
+spec:
+  selector:
+    app: retailpulse-api
+  ports:
+  - name: api
+    port: 8000
+    targetPort: 8000
+  - name: dashboard
+    port: 8501
+    targetPort: 8501
+  type: ClusterIP

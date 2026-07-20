@@ -1,0 +1,119 @@
+{
+  "dashboard": {
+    "title": "RetailPulse - Retail Analytics",
+    "uid": "retailpulse",
+    "tags": ["retail", "analytics", "ml"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "API Request Rate",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{handler}}"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+      },
+      {
+        "id": 2,
+        "title": "API Latency (p95)",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "p95 latency"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
+      },
+      {
+        "id": 3,
+        "title": "Model Predictions",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "rate(model_predictions_total[5m])",
+            "legendFormat": "{{model}}"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8}
+      },
+      {
+        "id": 4,
+        "title": "Prediction Errors",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "rate(model_prediction_errors_total[5m])",
+            "legendFormat": "{{model}}"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8}
+      },
+      {
+        "id": 5,
+        "title": "Data Drift Score",
+        "type": "gauge",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "data_drift_score",
+            "legendFormat": "Drift Score"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 16, "w": 6, "h": 6}
+      },
+      {
+        "id": 6,
+        "title": "Model Drift Score",
+        "type": "gauge",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "model_drift_score",
+            "legendFormat": "Model Drift"
+          }
+        ],
+        "gridPos": {"x": 6, "y": 16, "w": 6, "h": 6}
+      },
+      {
+        "id": 7,
+        "title": "Active Users",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "active_users",
+            "legendFormat": "Users"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 16, "w": 6, "h": 6}
+      },
+      {
+        "id": 8,
+        "title": "Forecast Accuracy (MAPE)",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "forecast_mape",
+            "legendFormat": "MAPE"
+          }
+        ],
+        "gridPos": {"x": 18, "y": 16, "w": 6, "h": 6}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  }
+}
