@@ -5,8 +5,13 @@ __pycache__/
 .jwt_secret
 data/raw/
 data/processed/
+data/features/
 mlruns/
-reports/
+reports/drift/
+reports/*.md
 models/
+notebooks/*_executed.ipynb
+launcher.log
 *.log
 .DS_Store
+skills-lock.json
