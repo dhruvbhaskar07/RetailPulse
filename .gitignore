@@ -1,4 +1,5 @@
 .venv/
+.agents/
 __pycache__/
 *.pyc
 .env
@@ -12,6 +13,7 @@ reports/*.md
 models/
 notebooks/*_executed.ipynb
 launcher.log
+skills-lock.json
 *.log
 .DS_Store
-skills-lock.json
+
